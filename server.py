@@ -1,7 +1,15 @@
+"""
+REST API for listing and/or reserving parking spaces.
+"""
+
+
 import sqlite3, os
 
 import flask
 from flask import jsonify, request
+
+
+__AUTHOR__ = "David Kilgore"
 
 
 app = flask.Flask(__name__)
@@ -18,7 +26,13 @@ if not os.path.exists(DATABASE):
 
 
 @app.route('/api/available', methods=['GET'])
-def list_available():
+def available():
+    """API endpoint for listing available parking spaces.
+
+    curl -X GET
+        http://localhost:8000/api/available
+        --data "lng=4,lat=9"
+    """
     r = []
     d = request.values.to_dict()
     conn = sqlite3.connect(DATABASE)
@@ -54,6 +68,12 @@ def list_available():
 
 @app.route('/api/reserve', methods=['POST'])
 def reserve():
+    """API endpoint for reserving a parking space.
+
+    curl -X POST
+        http://localhost:8000/api/reserve
+        --data "parking_spot=1&time_range=10"
+    """
     d = request.values.to_dict()
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
@@ -71,4 +91,5 @@ def reserve():
 
 
 if __name__ == '__main__':
+    # python server.py
     app.run(debug=True, port=8000)
