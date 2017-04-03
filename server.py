@@ -8,50 +8,66 @@ app = flask.Flask(__name__)
 DATABASE = 'db.sqlite'
 if not os.path.exists(DATABASE):
     print("Creating database.")
-    c = sqlite3.connect('db.sqlite')
-    c.execute('CREATE TABLE parking_spots (lng, lat, reserved)')
-    c.execute('INSERT INTO parking_spots VALUES (2, 4, 0)')
-    c.execute('INSERT INTO parking_spots VALUES (6, 1, 0)')
-    c.commit()
-    c.close()
+    conn = sqlite3.connect('db.sqlite')
+    c = conn.cursor()
+    c.execute('CREATE TABLE parking_spots (id, lng, lat, reserved, time)')
+    c.execute('INSERT INTO parking_spots VALUES (0, 2, 4, 0, 0)')
+    c.execute('INSERT INTO parking_spots VALUES (1, 6, 1, 0, 0)')
+    conn.commit()
+    conn.close()
 
 
 @app.route('/api/available', methods=['GET'])
 def list_available():
     r = []
     d = request.values.to_dict()
-    c = sqlite3.connect(DATABASE).cursor()
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
 
     if 'lng' in d and 'lat' in d:
         lng = int(d['lng'])
         lat = int(d['lat'])
-        q = 'SELECT * from parking_spots where lng = ? and lat = ?'
+        q = 'SELECT * from parking_spots where lng=? and lat=? and reserved=0'
         c.execute(q, (lng, lat))
+        conn.commit()
         for i in c.fetchall():
             r.append(i)
 
     elif 'lng' in d and not 'lat' in d:
         lng = int(d['lng'])
-        q = 'SELECT * from parking_spots where lng = ?'
+        q = 'SELECT * from parking_spots where lng=? and reserved=0'
         c.execute(q, (lng,))
+        conn.commit()
         for i in c.fetchall():
             r.append(i)
 
     elif not 'lng' in d and 'lat' in d:
         lat = int(d['lat'])
-        q = 'SELECT * from parking_spots where lat = ?'
+        q = 'SELECT * from parking_spots where lat=? and reserved=0'
         c.execute(q, (lat,))
+        conn.commit()
         for i in c.fetchall():
             r.append(i)
 
-    c.close()
     return jsonify({'available': r})
 
 
 @app.route('/api/reserve', methods=['POST'])
 def reserve():
-    a = []
-    return jsonify({'reserved': a})
+    d = request.values.to_dict()
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+
+    if 'parking_spot' in d and 'time_range' in d:
+        parking_spot = int(d['parking_spot'])
+        time_range = int(d['time_range'])
+        q = 'UPDATE parking_spots SET reserved=1, time=? WHERE id=?'
+        c.execute(q, (time_range, parking_spot))
+        conn.commit()
+
+    conn.commit()
+    conn.close()
+    return jsonify({'reserved': 'success'})
 
 
 if __name__ == '__main__':
