@@ -9,9 +9,6 @@ import flask
 from flask import jsonify, request
 
 
-__AUTHOR__ = "David Kilgore"
-
-
 app = flask.Flask(__name__)
 DATABASE = 'db.sqlite'
 if not os.path.exists(DATABASE):
